@@ -14,16 +14,48 @@ function CheckIcon(props) {
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
   const [placed, setPlaced] = useState(false);
+  const [orderNumber, setOrderNumber] = useState("");
   const [payment, setPayment] = useState("cod");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const delivery = total >= 500 ? 0 : 40;
   const grandTotal = total + delivery;
-  const orderId = "CMR" + Math.floor(100000 + Math.random() * 900000);
 
-  const handlePlaceOrder = (e) => {
+  const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    setPlaced(true);
-    clearCart();
+    setLoading(true);
+    setError("");
+
+    const form = new FormData(e.target);
+    const address = {
+      name: form.get("name"),
+      phone: form.get("phone"),
+      line: form.get("address"),
+      city: form.get("city"),
+      pincode: form.get("pincode"),
+    };
+
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items, address, payment, subtotal: total, delivery, total: grandTotal }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setError(data.error || "Something went wrong placing your order. Please try again.");
+        setLoading(false);
+        return;
+      }
+      setOrderNumber(data.orderNumber);
+      setPlaced(true);
+      clearCart();
+    } catch {
+      setError("Network error — please check your connection and try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (placed) {
@@ -35,7 +67,7 @@ export default function CheckoutPage() {
           </div>
           <h1>Order Placed Successfully!</h1>
           <p>
-            Your order <strong>#{orderId}</strong> has been placed and will be delivered soon.
+            Your order <strong>#{orderNumber}</strong> has been placed and will be delivered soon.
             A confirmation has been sent to your registered contact.
           </p>
           <Link href="/" className="home-link">Continue Shopping</Link>
@@ -77,25 +109,25 @@ export default function CheckoutPage() {
             <div className="form-row">
               <div className="form-group">
                 <label>Full Name</label>
-                <input type="text" placeholder="Your full name" required />
+                <input name="name" type="text" placeholder="Your full name" required />
               </div>
               <div className="form-group">
                 <label>Phone Number</label>
-                <input type="tel" placeholder="10-digit mobile number" required pattern="[0-9]{10}" />
+                <input name="phone" type="tel" placeholder="10-digit mobile number" required pattern="[0-9]{10}" />
               </div>
             </div>
             <div className="form-group">
               <label>Address</label>
-              <textarea rows={3} placeholder="House no, street, area" required />
+              <textarea name="address" rows={3} placeholder="House no, street, area" required />
             </div>
             <div className="form-row">
               <div className="form-group">
                 <label>City</label>
-                <input type="text" placeholder="City" required />
+                <input name="city" type="text" placeholder="City" required />
               </div>
               <div className="form-group">
                 <label>Pincode</label>
-                <input type="text" placeholder="6-digit pincode" required pattern="[0-9]{6}" />
+                <input name="pincode" type="text" placeholder="6-digit pincode" required pattern="[0-9]{6}" />
               </div>
             </div>
           </div>
@@ -104,15 +136,15 @@ export default function CheckoutPage() {
             <h2>Payment Method</h2>
             <div className="payment-options">
               <label className="payment-option">
-                <input type="radio" name="payment" checked={payment === "cod"} onChange={() => setPayment("cod")} />
+                <input type="radio" name="paymentMethod" checked={payment === "cod"} onChange={() => setPayment("cod")} />
                 Cash on Delivery
               </label>
               <label className="payment-option">
-                <input type="radio" name="payment" checked={payment === "upi"} onChange={() => setPayment("upi")} />
+                <input type="radio" name="paymentMethod" checked={payment === "upi"} onChange={() => setPayment("upi")} />
                 UPI (Google Pay / PhonePe / Paytm)
               </label>
               <label className="payment-option">
-                <input type="radio" name="payment" checked={payment === "card"} onChange={() => setPayment("card")} />
+                <input type="radio" name="paymentMethod" checked={payment === "card"} onChange={() => setPayment("card")} />
                 Credit / Debit Card
               </label>
             </div>
@@ -139,7 +171,10 @@ export default function CheckoutPage() {
             <span>Total</span>
             <span>₹{grandTotal}</span>
           </div>
-          <button type="submit" className="place-order-btn">Place Order</button>
+          {error && <p style={{ color: "#c62828", fontSize: 13, marginTop: 10 }}>{error}</p>}
+          <button type="submit" className="place-order-btn" disabled={loading}>
+            {loading ? "Placing Order…" : "Place Order"}
+          </button>
         </div>
       </form>
     </div>

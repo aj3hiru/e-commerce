@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { CATEGORIES, getCategoryProducts, SITE } from "@/lib/siteData";
+import { getCategoriesWithCounts } from "@/lib/data";
+import { SITE } from "@/lib/siteData";
 
 export const metadata = { title: `All Categories — ${SITE.name}` };
+export const dynamic = "force-dynamic";
 
 const EMOJI = {
   grocery: "🛒",
@@ -14,7 +16,9 @@ const EMOJI = {
   "garden-plant-care": "🌱",
 };
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+  const categories = await getCategoriesWithCounts();
+
   return (
     <div className="page-container">
       <div className="breadcrumb">
@@ -27,16 +31,13 @@ export default function CategoriesPage() {
       </div>
 
       <div className="categories-grid">
-        {CATEGORIES.map((cat) => {
-          const count = getCategoryProducts(cat.slug).length;
-          return (
-            <Link href={`/category/${cat.slug}`} className="category-tile" key={cat.slug}>
-              <div className="tile-icon">{EMOJI[cat.slug] || "🛍️"}</div>
-              <h3>{cat.name}</h3>
-              <div className="count">{count} product{count === 1 ? "" : "s"}</div>
-            </Link>
-          );
-        })}
+        {categories.map((cat) => (
+          <Link href={`/category/${cat.slug}`} className="category-tile" key={cat.slug}>
+            <div className="tile-icon">{EMOJI[cat.slug] || "🛍️"}</div>
+            <h3>{cat.name}</h3>
+            <div className="count">{cat.count} product{cat.count === 1 ? "" : "s"}</div>
+          </Link>
+        ))}
       </div>
     </div>
   );

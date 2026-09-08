@@ -6,13 +6,32 @@ import { useRouter } from "next/navigation";
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
+    setError("");
+
+    const form = new FormData(e.target);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.get("email"), password: form.get("password") }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setError(data.error || "Login failed. Please try again.");
+        setLoading(false);
+        return;
+      }
       router.push("/account");
-    }, 600);
+      router.refresh();
+    } catch {
+      setError("Network error — please try again.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -24,13 +43,14 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label>Email or Mobile Number</label>
-              <input type="text" placeholder="you@example.com" required />
+              <label>Email</label>
+              <input name="email" type="email" placeholder="you@example.com" required />
             </div>
             <div className="form-group">
               <label>Password</label>
-              <input type="password" placeholder="••••••••" required />
+              <input name="password" type="password" placeholder="••••••••" required />
             </div>
+            {error && <p style={{ color: "#c62828", fontSize: 13, marginBottom: 12 }}>{error}</p>}
             <button type="submit" className="auth-submit" disabled={loading}>
               {loading ? "Logging in…" : "Login"}
             </button>

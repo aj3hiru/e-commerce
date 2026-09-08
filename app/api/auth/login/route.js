@@ -1,0 +1,39 @@
+import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import { getSql, isDbConfigured } from "@/lib/db";
+import { createSession } from "@/lib/auth";
+
+export async function POST(request) {
+  const body = await request.json().catch(() => ({}));
+  const { email, password } = body;
+
+  if (!email || !password) {
+    return NextResponse.json({ ok: false, error: "Email and password are required." }, { status: 400 });
+  }
+
+  if (!isDbConfigured()) {
+    return NextResponse.json(
+      { ok: false, error: "Database not connected yet. Ask the site owner to set up the database." },
+      { status: 503 }
+    );
+  }
+
+  const sql = getSql();
+
+  try {
+    const [customer] = await sql`SELECT id, password_hash FROM customers WHERE email = ${email}`;
+    if (!customer) {
+      return NextResponse.json({ ok: false, error: "No account found with this email." }, { status: 401 });
+    }
+
+    const valid = await bcrypt.compare(password, customer.password_hash);
+    if (!valid) {
+      return NextResponse.json({ ok: false, error: "Incorrect password." }, { status: 401 });
+    }
+
+    await createSession(customer.id);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: String(err.message || err) }, { status: 500 });
+  }
+}

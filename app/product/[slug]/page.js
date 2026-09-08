@@ -5,15 +5,13 @@ import PdpActions from "@/components/PdpActions";
 import StarRating from "@/components/StarRating";
 import ReviewsSection from "@/components/ReviewsSection";
 import ProductGrid from "@/components/ProductGrid";
-import { getProductBySlug, getRelatedProducts, PRODUCTS } from "@/lib/siteData";
+import { getProductBySlug, getRelatedProducts } from "@/lib/data";
 
-export function generateStaticParams() {
-  return PRODUCTS.map((p) => ({ slug: p.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) return {};
   return {
     title: `${product.title} — Cmart Ready`,
@@ -23,10 +21,10 @@ export async function generateMetadata({ params }) {
 
 export default async function ProductPage({ params }) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const related = getRelatedProducts(product);
+  const related = await getRelatedProducts(product);
   const off = product.mrp - product.sp;
   const outOfStock = product.stock <= 0;
 

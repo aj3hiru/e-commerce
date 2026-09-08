@@ -2,14 +2,17 @@ import BannerSlider from "@/components/BannerSlider";
 import IconStrip from "@/components/IconStrip";
 import CategoryRow from "@/components/CategoryRow";
 import ProductGrid from "@/components/ProductGrid";
-import {
-  FRESH_ITEMS,
-  SNACKS_DRINKS,
-  POPULAR_PRODUCTS,
-  GARDEN_PRODUCTS,
-} from "@/lib/siteData";
+import { FRESH_ITEMS, SNACKS_DRINKS } from "@/lib/siteData";
+import { getFeaturedProducts, getGardenProducts } from "@/lib/data";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const [popularProducts, gardenProducts] = await Promise.all([
+    getFeaturedProducts(),
+    getGardenProducts(),
+  ]);
+
   return (
     <>
       <div className="page-container">
@@ -19,7 +22,7 @@ export default function HomePage() {
         <CategoryRow title="Snacks & Drinks" items={SNACKS_DRINKS} />
       </div>
 
-      <ProductGrid title="Popular Products" products={POPULAR_PRODUCTS} />
+      <ProductGrid title="Popular Products" products={popularProducts} />
 
       <div className="festive-banner">
         <span className="leaf left">🌿</span>
@@ -27,7 +30,7 @@ export default function HomePage() {
         <h2>FESTIVE CELEBRATIONS</h2>
       </div>
 
-      <ProductGrid title="Garden &amp; Plant Care" products={GARDEN_PRODUCTS} />
+      <ProductGrid title="Garden &amp; Plant Care" products={gardenProducts} />
     </>
   );
 }

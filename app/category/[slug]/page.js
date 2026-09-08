@@ -2,20 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import ProductCard from "@/components/ProductCard";
 import SortSelect from "@/components/SortSelect";
-import {
-  CATEGORIES,
-  getCategoryBySlug,
-  getCategoryProducts,
-  sortProducts,
-} from "@/lib/siteData";
+import { getCategoryBySlug, getCategoryProducts } from "@/lib/data";
 
-export function generateStaticParams() {
-  return CATEGORIES.map((c) => ({ slug: c.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug);
   if (!category) return {};
   return { title: `${category.name} — Cmart Ready` };
 }
@@ -23,12 +16,12 @@ export async function generateMetadata({ params }) {
 export default async function CategoryPage({ params, searchParams }) {
   const { slug } = await params;
   const sp = await searchParams;
-  const category = getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
   const activeSub = sp?.sub || "";
   const sort = sp?.sort || "";
-  const products = sortProducts(getCategoryProducts(category.slug, activeSub || undefined), sort);
+  const products = await getCategoryProducts(category.slug, activeSub || undefined, sort);
 
   const buildHref = (subVal, sortVal) => {
     const q = new URLSearchParams();

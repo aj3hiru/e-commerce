@@ -1,11 +1,13 @@
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
-import { PRODUCTS, sortProducts, SITE } from "@/lib/siteData";
+import { getAllProductsByDiscount } from "@/lib/data";
+import { SITE } from "@/lib/siteData";
 
 export const metadata = { title: `Offers & Deals — ${SITE.name}` };
+export const dynamic = "force-dynamic";
 
-export default function OffersPage() {
-  const deals = sortProducts(PRODUCTS, "discount");
+export default async function OffersPage() {
+  const deals = await getAllProductsByDiscount();
 
   return (
     <div className="page-container">
