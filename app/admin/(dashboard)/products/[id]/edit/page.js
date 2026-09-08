@@ -25,9 +25,9 @@ export default async function EditProductPage({ params }) {
 
   return (
     <div>
-      <div className="admin-header">
-        <h1>Edit Product</h1>
-        <Link href="/admin/products" className="admin-btn secondary">← Back to Products</Link>
+      <div className="section-label" style={{ margin: "0 0 1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span><i className="fas fa-edit" /> Edit Product</span>
+        <Link href="/admin/products" className="abtn">← Back to Products</Link>
       </div>
       <ProductForm categories={categories} initial={product} productId={id} />
     </div>

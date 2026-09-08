@@ -15,9 +15,9 @@ export default async function NewProductPage() {
 
   return (
     <div>
-      <div className="admin-header">
-        <h1>Add Product</h1>
-        <Link href="/admin/products" className="admin-btn secondary">← Back to Products</Link>
+      <div className="section-label" style={{ margin: "0 0 1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span><i className="fas fa-plus-square" /> Add Product</span>
+        <Link href="/admin/products" className="abtn">← Back to Products</Link>
       </div>
       <ProductForm categories={categories} />
     </div>
