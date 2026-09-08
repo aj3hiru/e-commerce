@@ -1,22 +1,18 @@
 import Link from "next/link";
-import { getSessionCustomerId } from "@/lib/auth";
-import { getSql, isDbConfigured } from "@/lib/db";
+import { getSessionCustomer } from "@/lib/auth";
+import { getSql } from "@/lib/db";
 import LogoutButton from "@/components/LogoutButton";
 
 export const dynamic = "force-dynamic";
 
 async function getAccountData() {
-  if (!isDbConfigured()) return null;
-  const customerId = await getSessionCustomerId();
-  if (!customerId) return null;
-
-  const sql = getSql();
-  const [customer] = await sql`SELECT name, email, phone FROM customers WHERE id = ${customerId}`;
+  const customer = await getSessionCustomer();
   if (!customer) return null;
 
+  const sql = getSql();
   const orders = await sql`
     SELECT order_number, total, status, created_at
-    FROM orders WHERE customer_id = ${customerId}
+    FROM orders WHERE customer_id = ${customer.id}
     ORDER BY created_at DESC LIMIT 10
   `;
 
@@ -81,6 +77,9 @@ export default async function AccountPage() {
 
         <div className="account-card">
           <h3>Quick Links</h3>
+          {data?.customer?.role === "admin" && (
+            <div className="account-row"><Link href="/admin">Admin Panel</Link><span>→</span></div>
+          )}
           <div className="account-row"><Link href="/order">Track an Order</Link><span>→</span></div>
           <div className="account-row"><Link href="/wishlist">My Wishlist</Link><span>→</span></div>
           <div className="account-row"><Link href="/cart">My Cart</Link><span>→</span></div>

@@ -21,7 +21,7 @@ export async function POST(request) {
   const sql = getSql();
 
   try {
-    const [customer] = await sql`SELECT id, password_hash FROM customers WHERE email = ${email}`;
+    const [customer] = await sql`SELECT id, password_hash, role FROM customers WHERE email = ${email}`;
     if (!customer) {
       return NextResponse.json({ ok: false, error: "No account found with this email." }, { status: 401 });
     }
@@ -32,7 +32,7 @@ export async function POST(request) {
     }
 
     await createSession(customer.id);
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, role: customer.role || "customer" });
   } catch (err) {
     return NextResponse.json({ ok: false, error: String(err.message || err) }, { status: 500 });
   }

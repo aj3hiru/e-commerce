@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { getSql, isDbConfigured } from "@/lib/db";
 import { CATEGORIES, PRODUCTS, POPULAR_PRODUCTS } from "@/lib/siteData";
 
@@ -75,9 +76,36 @@ export async function GET(request) {
         email VARCHAR(255) UNIQUE NOT NULL,
         phone VARCHAR(30),
         password_hash VARCHAR(255) NOT NULL,
+        role VARCHAR(20) DEFAULT 'customer',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
+    // Migration safety net: adds the `role` column if this table was created
+    // by an older version of this route, before `role` existed. Ignored if
+    // the column is already present.
+    try {
+      await sql`ALTER TABLE customers ADD COLUMN role VARCHAR(20) DEFAULT 'customer'`;
+    } catch {
+      // column already exists — nothing to do
+    }
+
+    // Provision (or promote) the admin account from env vars, every time
+    // this route is visited, so it stays in sync even after the first run.
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (adminEmail && adminPassword) {
+      const [existingAdmin] = await sql`SELECT id FROM customers WHERE email = ${adminEmail}`;
+      if (existingAdmin) {
+        await sql`UPDATE customers SET role = 'admin' WHERE id = ${existingAdmin.id}`;
+      } else {
+        const hash = await bcrypt.hash(adminPassword, 10);
+        await sql`
+          INSERT INTO customers (name, email, phone, password_hash, role)
+          VALUES ('Admin', ${adminEmail}, NULL, ${hash}, 'admin')
+        `;
+      }
+    }
+
     await sql`
       CREATE TABLE IF NOT EXISTS orders (
         id INT AUTO_INCREMENT PRIMARY KEY,

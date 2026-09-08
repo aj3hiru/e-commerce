@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { isAdminSession } from "@/lib/auth";
+import { getSessionCustomer } from "@/lib/auth";
 import AdminLogoutButton from "@/components/AdminLogoutButton";
 
 export default async function AdminDashboardLayout({ children }) {
-  const authed = await isAdminSession();
-  if (!authed) redirect("/admin/login");
+  const customer = await getSessionCustomer();
+  if (!customer) redirect("/login");
+  if (customer.role !== "admin") redirect("/account");
 
   return (
     <div className="admin-shell">

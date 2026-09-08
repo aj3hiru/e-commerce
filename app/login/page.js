@@ -26,7 +26,7 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
-      router.push("/account");
+      router.push(data.role === "admin" ? "/admin" : "/account");
       router.refresh();
     } catch {
       setError("Network error — please try again.");

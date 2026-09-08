@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getSql, isDbConfigured } from "@/lib/db";
-import { isAdminSession } from "@/lib/auth";
+import { getSessionCustomer } from "@/lib/auth";
 
 export async function GET(request, { params }) {
-  if (!(await isAdminSession())) {
+  const __admin = await getSessionCustomer();
+  if (!__admin || __admin.role !== "admin") {
     return NextResponse.json({ ok: false, error: "Not authorized." }, { status: 401 });
   }
   const { id } = await params;
@@ -14,7 +15,8 @@ export async function GET(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
-  if (!(await isAdminSession())) {
+  const __admin = await getSessionCustomer();
+  if (!__admin || __admin.role !== "admin") {
     return NextResponse.json({ ok: false, error: "Not authorized." }, { status: 401 });
   }
   if (!isDbConfigured()) {
@@ -42,7 +44,8 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  if (!(await isAdminSession())) {
+  const __admin = await getSessionCustomer();
+  if (!__admin || __admin.role !== "admin") {
     return NextResponse.json({ ok: false, error: "Not authorized." }, { status: 401 });
   }
   if (!isDbConfigured()) {

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getSql, isDbConfigured } from "@/lib/db";
-import { isAdminSession } from "@/lib/auth";
+import { getSessionCustomer } from "@/lib/auth";
 
 export async function GET() {
-  if (!(await isAdminSession())) {
+  const __admin = await getSessionCustomer();
+  if (!__admin || __admin.role !== "admin") {
     return NextResponse.json({ ok: false, error: "Not authorized." }, { status: 401 });
   }
   if (!isDbConfigured()) {
@@ -29,7 +30,8 @@ function slugify(title) {
 }
 
 export async function POST(request) {
-  if (!(await isAdminSession())) {
+  const __admin = await getSessionCustomer();
+  if (!__admin || __admin.role !== "admin") {
     return NextResponse.json({ ok: false, error: "Not authorized." }, { status: 401 });
   }
   if (!isDbConfigured()) {
