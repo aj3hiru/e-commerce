@@ -4,11 +4,11 @@ import { CartIcon, HeartIcon } from "./Icons";
 import { useCart } from "./CartContext";
 
 export default function PdpActions({ product }) {
-  const { addItem } = useCart();
+  const { addItem, toggleWishlist, isWished } = useCart();
   const [qty, setQty] = useState(1);
-  const [wished, setWished] = useState(false);
   const [added, setAdded] = useState(false);
   const outOfStock = product.stock <= 0;
+  const wished = isWished(product.title);
 
   const handleAdd = () => {
     for (let i = 0; i < qty; i++) addItem(product);
@@ -37,7 +37,7 @@ export default function PdpActions({ product }) {
         <button
           type="button"
           className={`pdp-wishlist ${wished ? "active" : ""}`}
-          onClick={() => setWished((w) => !w)}
+          onClick={() => toggleWishlist(product)}
           aria-label="Toggle wishlist"
         >
           <HeartIcon fill={wished ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" />

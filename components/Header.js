@@ -17,7 +17,7 @@ import {
 
 export default function Header() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { count, total } = useCart();
+  const { count, total, wishlist } = useCart();
 
   return (
     <>
@@ -56,9 +56,10 @@ export default function Header() {
             <UserIcon className="icon" />
             <span className="label">Sign In / Register</span>
           </Link>
-          <div className="item">
+          <Link href="/wishlist" className="item cart-badge">
             <HeartIcon className="icon" />
-          </div>
+            {wishlist.length > 0 && <span className="count">{wishlist.length}</span>}
+          </Link>
           <Link href="/cart" className="item cart-badge">
             <CartIcon className="icon" fill="none" stroke="currentColor" strokeWidth="1.8" />
             <span className="count">{count}</span>
@@ -82,7 +83,10 @@ export default function Header() {
           <Image className="mark" src={SITE.logo} alt={`${SITE.name} logo`} width={110} height={34} />
         </Link>
         <div className="mobile-actions">
-          <HeartIcon className="icon" />
+          <Link href="/wishlist" className="cart-badge">
+            <HeartIcon className="icon" />
+            {wishlist.length > 0 && <span className="count">{wishlist.length}</span>}
+          </Link>
           <Link href="/cart" className="cart-badge">
             <CartIcon className="icon" fill="none" stroke="currentColor" strokeWidth="1.8" />
             <span className="count">{count}</span>
