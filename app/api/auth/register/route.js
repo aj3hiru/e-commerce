@@ -5,10 +5,13 @@ import { createSession } from "@/lib/auth";
 
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
-  const { name, email, phone, password } = body;
+  const { name, email, phone, username, password } = body;
 
-  if (!name || !email || !password) {
-    return NextResponse.json({ ok: false, error: "Name, email and password are required." }, { status: 400 });
+  if (!name || !email || !phone || !username || !password) {
+    return NextResponse.json(
+      { ok: false, error: "Name, email, phone, username and password are all required." },
+      { status: 400 }
+    );
   }
 
   if (!isDbConfigured()) {
@@ -21,15 +24,23 @@ export async function POST(request) {
   const sql = getSql();
 
   try {
-    const [existing] = await sql`SELECT id FROM customers WHERE email = ${email}`;
-    if (existing) {
+    const [existingEmail] = await sql`SELECT id FROM customers WHERE email = ${email}`;
+    if (existingEmail) {
       return NextResponse.json({ ok: false, error: "An account with this email already exists." }, { status: 409 });
+    }
+    const [existingUsername] = await sql`SELECT id FROM customers WHERE username = ${username}`;
+    if (existingUsername) {
+      return NextResponse.json({ ok: false, error: "This username is already taken." }, { status: 409 });
+    }
+    const [existingPhone] = await sql`SELECT id FROM customers WHERE phone = ${phone}`;
+    if (existingPhone) {
+      return NextResponse.json({ ok: false, error: "An account with this mobile number already exists." }, { status: 409 });
     }
 
     const hash = await bcrypt.hash(password, 10);
     const [row] = await sql`
-      INSERT INTO customers (name, email, phone, password_hash)
-      VALUES (${name}, ${email}, ${phone || null}, ${hash})
+      INSERT INTO customers (name, email, phone, username, password_hash)
+      VALUES (${name}, ${email}, ${phone}, ${username}, ${hash})
     `;
 
     await createSession(row.id);

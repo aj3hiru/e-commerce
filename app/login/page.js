@@ -18,7 +18,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.get("email"), password: form.get("password") }),
+        body: JSON.stringify({ identifier: form.get("identifier"), password: form.get("password") }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
@@ -43,8 +43,8 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label>Email</label>
-              <input name="email" type="email" placeholder="you@example.com" required />
+              <label>Email / Mobile Number / Username</label>
+              <input name="identifier" type="text" placeholder="you@example.com / 98765xxxxx / username" required />
             </div>
             <div className="form-group">
               <label>Password</label>

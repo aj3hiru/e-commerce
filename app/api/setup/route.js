@@ -75,16 +75,22 @@ export async function GET(request) {
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
         phone VARCHAR(30),
+        username VARCHAR(100) UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
         role VARCHAR(20) DEFAULT 'customer',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
-    // Migration safety net: adds the `role` column if this table was created
-    // by an older version of this route, before `role` existed. Ignored if
-    // the column is already present.
+    // Migration safety net: adds columns if this table was created by an
+    // older version of this route, before they existed. Ignored if a
+    // column is already present.
     try {
       await sql`ALTER TABLE customers ADD COLUMN role VARCHAR(20) DEFAULT 'customer'`;
+    } catch {
+      // column already exists — nothing to do
+    }
+    try {
+      await sql`ALTER TABLE customers ADD COLUMN username VARCHAR(100) UNIQUE`;
     } catch {
       // column already exists — nothing to do
     }

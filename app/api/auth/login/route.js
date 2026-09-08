@@ -5,10 +5,13 @@ import { createSession } from "@/lib/auth";
 
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
-  const { email, password } = body;
+  const { identifier, password } = body;
 
-  if (!email || !password) {
-    return NextResponse.json({ ok: false, error: "Email and password are required." }, { status: 400 });
+  if (!identifier || !password) {
+    return NextResponse.json(
+      { ok: false, error: "Email/mobile/username and password are required." },
+      { status: 400 }
+    );
   }
 
   if (!isDbConfigured()) {
@@ -21,9 +24,12 @@ export async function POST(request) {
   const sql = getSql();
 
   try {
-    const [customer] = await sql`SELECT id, password_hash, role FROM customers WHERE email = ${email}`;
+    const [customer] = await sql`
+      SELECT id, password_hash, role FROM customers
+      WHERE email = ${identifier} OR phone = ${identifier} OR username = ${identifier}
+    `;
     if (!customer) {
-      return NextResponse.json({ ok: false, error: "No account found with this email." }, { status: 401 });
+      return NextResponse.json({ ok: false, error: "No account found with this email, mobile or username." }, { status: 401 });
     }
 
     const valid = await bcrypt.compare(password, customer.password_hash);

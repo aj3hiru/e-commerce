@@ -22,6 +22,7 @@ export default function RegisterPage() {
           name: form.get("name"),
           phone: form.get("phone"),
           email: form.get("email"),
+          username: form.get("username"),
           password: form.get("password"),
         }),
       });
@@ -58,6 +59,10 @@ export default function RegisterPage() {
             <div className="form-group">
               <label>Email</label>
               <input name="email" type="email" placeholder="you@example.com" required />
+            </div>
+            <div className="form-group">
+              <label>Username</label>
+              <input name="username" type="text" placeholder="Choose a username" required minLength={3} pattern="[a-zA-Z0-9_.]+" title="Letters, numbers, underscore and dot only" />
             </div>
             <div className="form-group">
               <label>Password</label>
