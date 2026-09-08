@@ -1,17 +1,20 @@
 "use client";
+import Link from "next/link";
 import { CartIcon } from "./Icons";
 import { useCart } from "./CartContext";
+import { slugify } from "@/lib/siteData";
 
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
   const off = product.mrp - product.sp;
+  const href = `/product/${product.slug || slugify(product.title)}`;
 
   return (
     <div className="product-card">
-      <div className="img-wrap">
+      <Link href={href} className="img-wrap">
         <img src={product.img} alt={product.title} />
-      </div>
-      <div className="title">{product.title}</div>
+      </Link>
+      <Link href={href} className="title">{product.title}</Link>
       <div className="price-row">
         <div className="prices">
           <span className="label">MRP</span>
