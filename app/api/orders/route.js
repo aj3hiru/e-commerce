@@ -35,7 +35,6 @@ export async function POST(request) {
       VALUES
         (${orderNumber}, ${customerId}, ${address.name}, ${address.phone}, ${address.line}, ${address.city},
          ${address.pincode}, ${payment}, ${subtotal}, ${delivery}, ${total})
-      RETURNING id
     `;
 
     for (const item of items) {

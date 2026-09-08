@@ -2,17 +2,16 @@ import { NextResponse } from "next/server";
 import { getSql, isDbConfigured } from "@/lib/db";
 import { CATEGORIES, PRODUCTS, POPULAR_PRODUCTS } from "@/lib/siteData";
 
-// Visit /api/setup?key=YOUR_KEY once (after creating a Postgres DB in Vercel's
-// Storage tab and setting a SETUP_KEY environment variable) to create tables
-// and load starter data. Safe to call more than once — it skips seeding if
-// data already exists.
+// Visit /api/setup?key=YOUR_KEY once (after setting DB_HOST, DB_USER, DB_PASSWORD,
+// DB_NAME and SETUP_KEY environment variables) to create tables and load starter
+// data. Safe to call more than once — it skips seeding if data already exists.
 export async function GET(request) {
   if (!isDbConfigured()) {
     return NextResponse.json(
       {
         ok: false,
         error:
-          "No database connected yet. Go to your Vercel project → Storage tab → Create Database (Postgres/Neon), then redeploy and try this URL again.",
+          "No database connected yet. Set DB_HOST, DB_USER, DB_PASSWORD and DB_NAME environment variables, then redeploy and try this URL again.",
       },
       { status: 400 }
     );
@@ -30,83 +29,89 @@ export async function GET(request) {
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS categories (
-        id SERIAL PRIMARY KEY,
-        slug TEXT UNIQUE NOT NULL,
-        name TEXT NOT NULL
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        slug VARCHAR(191) UNIQUE NOT NULL,
+        name VARCHAR(255) NOT NULL
       )
     `;
     await sql`
       CREATE TABLE IF NOT EXISTS subcategories (
-        id SERIAL PRIMARY KEY,
-        category_id INTEGER REFERENCES categories(id) ON DELETE CASCADE,
-        slug TEXT NOT NULL,
-        name TEXT NOT NULL,
-        UNIQUE(category_id, slug)
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        category_id INT,
+        slug VARCHAR(191) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        UNIQUE KEY uniq_cat_slug (category_id, slug),
+        FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
       )
     `;
     await sql`
       CREATE TABLE IF NOT EXISTS products (
-        id SERIAL PRIMARY KEY,
-        slug TEXT UNIQUE NOT NULL,
-        title TEXT NOT NULL,
-        brand TEXT,
-        category_id INTEGER REFERENCES categories(id),
-        subcategory_id INTEGER REFERENCES subcategories(id),
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        slug VARCHAR(191) UNIQUE NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        brand VARCHAR(255),
+        category_id INT,
+        subcategory_id INT,
         img TEXT,
-        images JSONB DEFAULT '[]',
-        mrp NUMERIC NOT NULL,
-        sp NUMERIC NOT NULL,
-        qty_label TEXT,
-        per_unit TEXT,
+        images JSON,
+        mrp DECIMAL(10,2) NOT NULL,
+        sp DECIMAL(10,2) NOT NULL,
+        qty_label VARCHAR(100),
+        per_unit VARCHAR(100),
         description TEXT,
-        stock INTEGER DEFAULT 0,
-        rating NUMERIC DEFAULT 4,
-        reviews JSONB DEFAULT '[]',
-        featured BOOLEAN DEFAULT false,
-        created_at TIMESTAMP DEFAULT now()
+        stock INT DEFAULT 0,
+        rating DECIMAL(3,2) DEFAULT 4,
+        reviews JSON,
+        featured BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (category_id) REFERENCES categories(id),
+        FOREIGN KEY (subcategory_id) REFERENCES subcategories(id)
       )
     `;
     await sql`
       CREATE TABLE IF NOT EXISTS customers (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        phone TEXT,
-        password_hash TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT now()
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        phone VARCHAR(30),
+        password_hash VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
     await sql`
       CREATE TABLE IF NOT EXISTS orders (
-        id SERIAL PRIMARY KEY,
-        order_number TEXT UNIQUE NOT NULL,
-        customer_id INTEGER REFERENCES customers(id),
-        name TEXT NOT NULL,
-        phone TEXT NOT NULL,
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        order_number VARCHAR(50) UNIQUE NOT NULL,
+        customer_id INT,
+        name VARCHAR(255) NOT NULL,
+        phone VARCHAR(30) NOT NULL,
         address TEXT NOT NULL,
-        city TEXT NOT NULL,
-        pincode TEXT NOT NULL,
-        payment_method TEXT NOT NULL,
-        subtotal NUMERIC NOT NULL,
-        delivery_fee NUMERIC NOT NULL,
-        total NUMERIC NOT NULL,
-        status TEXT DEFAULT 'placed',
-        created_at TIMESTAMP DEFAULT now()
+        city VARCHAR(100) NOT NULL,
+        pincode VARCHAR(20) NOT NULL,
+        payment_method VARCHAR(30) NOT NULL,
+        subtotal DECIMAL(10,2) NOT NULL,
+        delivery_fee DECIMAL(10,2) NOT NULL,
+        total DECIMAL(10,2) NOT NULL,
+        status VARCHAR(30) DEFAULT 'placed',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (customer_id) REFERENCES customers(id)
       )
     `;
     await sql`
       CREATE TABLE IF NOT EXISTS order_items (
-        id SERIAL PRIMARY KEY,
-        order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
-        product_id INTEGER REFERENCES products(id),
-        title TEXT NOT NULL,
-        qty INTEGER NOT NULL,
-        price NUMERIC NOT NULL
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        order_id INT,
+        product_id INT,
+        title VARCHAR(255) NOT NULL,
+        qty INT NOT NULL,
+        price DECIMAL(10,2) NOT NULL,
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+        FOREIGN KEY (product_id) REFERENCES products(id)
       )
     `;
 
-    const existing = await sql`SELECT COUNT(*)::int AS count FROM categories`;
-    if (existing[0].count > 0) {
+    const existing = await sql`SELECT COUNT(*) AS count FROM categories`;
+    if (Number(existing[0].count) > 0) {
       return NextResponse.json({ ok: true, message: "Tables already set up and seeded. Nothing more to do." });
     }
 
@@ -114,7 +119,6 @@ export async function GET(request) {
     for (const cat of CATEGORIES) {
       const [row] = await sql`
         INSERT INTO categories (slug, name) VALUES (${cat.slug}, ${cat.name})
-        RETURNING id
       `;
       categoryIdBySlug[cat.slug] = row.id;
 
@@ -122,7 +126,6 @@ export async function GET(request) {
         const [subRow] = await sql`
           INSERT INTO subcategories (category_id, slug, name)
           VALUES (${row.id}, ${sub.slug}, ${sub.name})
-          RETURNING id
         `;
         categoryIdBySlug[`${cat.slug}::${sub.slug}`] = subRow.id;
       }
@@ -135,13 +138,12 @@ export async function GET(request) {
       const featured = POPULAR_PRODUCTS.some((pp) => pp.title === p.title);
 
       await sql`
-        INSERT INTO products
+        INSERT IGNORE INTO products
           (slug, title, brand, category_id, subcategory_id, img, images, mrp, sp, qty_label, per_unit, description, stock, rating, reviews, featured)
         VALUES
           (${p.slug}, ${p.title}, ${p.brand}, ${categoryId}, ${subcategoryId}, ${p.img},
            ${JSON.stringify(p.images)}, ${p.mrp}, ${p.sp}, ${p.qty || null}, ${p.perUnit || null},
            ${p.description}, ${p.stock}, ${p.rating}, ${JSON.stringify(p.reviews)}, ${featured})
-        ON CONFLICT (slug) DO NOTHING
       `;
       seededProducts++;
     }

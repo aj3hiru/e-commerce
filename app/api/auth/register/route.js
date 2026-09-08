@@ -30,7 +30,6 @@ export async function POST(request) {
     const [row] = await sql`
       INSERT INTO customers (name, email, phone, password_hash)
       VALUES (${name}, ${email}, ${phone || null}, ${hash})
-      RETURNING id
     `;
 
     await createSession(row.id);

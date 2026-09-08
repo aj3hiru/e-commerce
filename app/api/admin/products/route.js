@@ -53,7 +53,6 @@ export async function POST(request) {
       VALUES
         (${slug}, ${title}, ${brand || null}, ${categoryId || null}, ${img || null}, ${JSON.stringify(img ? [img] : [])},
          ${mrp}, ${sp}, ${qtyLabel || null}, ${perUnit || null}, ${description || null}, ${stock || 0}, 4, '[]', ${!!featured})
-      RETURNING id
     `;
     return NextResponse.json({ ok: true, id: row.id });
   } catch (err) {
