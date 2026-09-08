@@ -1,5 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
+import { AdmIcons } from "./admin/AdmIcons";
 
 export default function AdminLogoutButton() {
   const router = useRouter();
@@ -11,21 +12,8 @@ export default function AdminLogoutButton() {
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleLogout}
-      style={{
-        background: "none",
-        border: "1px solid rgba(255,255,255,0.2)",
-        borderRadius: 6,
-        padding: "9px 14px",
-        fontSize: 13,
-        fontWeight: 700,
-        color: "#fff",
-        width: "100%",
-      }}
-    >
-      Logout
+    <button type="button" onClick={handleLogout} className="adm-nav-link" style={{ width: "100%", border: "none", background: "none", cursor: "pointer", color: "#c62828" }}>
+      <AdmIcons.Logout /> Logout
     </button>
   );
 }
