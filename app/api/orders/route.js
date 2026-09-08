@@ -8,7 +8,7 @@ function generateOrderNumber() {
 
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
-  const { items, address, payment, subtotal, delivery, total } = body;
+  const { items, address, payment, subtotal, delivery, discount, couponCode, total } = body;
 
   if (!items || items.length === 0) {
     return NextResponse.json({ ok: false, error: "Cart is empty." }, { status: 400 });
@@ -31,10 +31,10 @@ export async function POST(request) {
 
     const [order] = await sql`
       INSERT INTO orders
-        (order_number, customer_id, name, phone, address, city, pincode, payment_method, subtotal, delivery_fee, total)
+        (order_number, customer_id, name, phone, address, city, pincode, payment_method, subtotal, delivery_fee, discount, coupon_code, total)
       VALUES
         (${orderNumber}, ${customerId}, ${address.name}, ${address.phone}, ${address.line}, ${address.city},
-         ${address.pincode}, ${payment}, ${subtotal}, ${delivery}, ${total})
+         ${address.pincode}, ${payment}, ${subtotal}, ${delivery}, ${discount || 0}, ${couponCode || null}, ${total})
     `;
 
     for (const item of items) {
@@ -42,6 +42,10 @@ export async function POST(request) {
         INSERT INTO order_items (order_id, product_id, title, qty, price)
         VALUES (${order.id}, NULL, ${item.title}, ${item.qty}, ${item.sp})
       `;
+    }
+
+    if (couponCode) {
+      await sql`UPDATE coupons SET usage_count = usage_count + 1 WHERE code = ${couponCode}`;
     }
 
     return NextResponse.json({ ok: true, orderNumber, persisted: true });

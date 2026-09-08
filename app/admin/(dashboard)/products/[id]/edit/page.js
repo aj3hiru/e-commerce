@@ -11,6 +11,12 @@ async function getCategories() {
   return sql`SELECT id, name FROM categories ORDER BY name`;
 }
 
+async function getBrands() {
+  if (!isDbConfigured()) return [];
+  const sql = getSql();
+  return sql`SELECT id, name FROM brands ORDER BY name`;
+}
+
 async function getProduct(id) {
   if (!isDbConfigured()) return null;
   const sql = getSql();
@@ -20,7 +26,7 @@ async function getProduct(id) {
 
 export default async function EditProductPage({ params }) {
   const { id } = await params;
-  const [categories, product] = await Promise.all([getCategories(), getProduct(id)]);
+  const [categories, brands, product] = await Promise.all([getCategories(), getBrands(), getProduct(id)]);
   if (!product) notFound();
 
   return (
@@ -29,7 +35,7 @@ export default async function EditProductPage({ params }) {
         <span><i className="fas fa-edit" /> Edit Product</span>
         <Link href="/admin/products" className="abtn">← Back to Products</Link>
       </div>
-      <ProductForm categories={categories} initial={product} productId={id} />
+      <ProductForm categories={categories} brands={brands} initial={product} productId={id} />
     </div>
   );
 }

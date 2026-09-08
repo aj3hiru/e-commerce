@@ -4,6 +4,8 @@ import { CartIcon } from "./Icons";
 import { useCart } from "./CartContext";
 import { slugify } from "@/lib/siteData";
 
+const BADGE_LABELS = { new: "NEW", best: "BESTSELLER", hot: "HOT", featured: "FEATURED" };
+
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
   const off = product.mrp - product.sp;
@@ -11,7 +13,8 @@ export default function ProductCard({ product }) {
 
   return (
     <div className="product-card">
-      <Link href={href} className="img-wrap">
+      <Link href={href} className="img-wrap" style={{ position: "relative" }}>
+        {product.badgeTag && <span className={`product-tag tag-${product.badgeTag}`}>{BADGE_LABELS[product.badgeTag]}</span>}
         <img src={product.img} alt={product.title} />
       </Link>
       <Link href={href} className="title">{product.title}</Link>

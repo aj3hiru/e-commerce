@@ -4,13 +4,15 @@ import CategoryRow from "@/components/CategoryRow";
 import ProductGrid from "@/components/ProductGrid";
 import { FRESH_ITEMS, SNACKS_DRINKS } from "@/lib/siteData";
 import { getFeaturedProducts, getGardenProducts } from "@/lib/data";
+import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [popularProducts, gardenProducts] = await Promise.all([
+  const [popularProducts, gardenProducts, settings] = await Promise.all([
     getFeaturedProducts(),
     getGardenProducts(),
+    getSettings(),
   ]);
 
   return (
@@ -27,7 +29,7 @@ export default async function HomePage() {
       <div className="festive-banner">
         <span className="leaf left">🌿</span>
         <span className="leaf right">🌿</span>
-        <h2>FESTIVE CELEBRATIONS</h2>
+        <h2>{settings.festive_banner_text}</h2>
       </div>
 
       <ProductGrid title="Garden &amp; Plant Care" products={gardenProducts} />

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function ProductForm({ categories, initial, productId }) {
+export default function ProductForm({ categories, brands, initial, productId }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -17,7 +17,7 @@ export default function ProductForm({ categories, initial, productId }) {
     const form = new FormData(e.target);
     const payload = {
       title: form.get("title"),
-      brand: form.get("brand"),
+      brandId: form.get("brandId") || null,
       categoryId: form.get("categoryId") || null,
       img: form.get("img"),
       mrp: Number(form.get("mrp")),
@@ -27,6 +27,7 @@ export default function ProductForm({ categories, initial, productId }) {
       description: form.get("description"),
       stock: Number(form.get("stock")),
       featured: form.get("featured") === "on",
+      badgeTag: form.get("badgeTag") || "none",
     };
 
     try {
@@ -58,7 +59,12 @@ export default function ProductForm({ categories, initial, productId }) {
         </div>
         <div className="aform-group">
           <label>Brand</label>
-          <input name="brand" type="text" defaultValue={initial?.brand} />
+          <select name="brandId" defaultValue={initial?.brand_id || ""}>
+            <option value="">— None —</option>
+            {brands.map((b) => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -73,9 +79,20 @@ export default function ProductForm({ categories, initial, productId }) {
           </select>
         </div>
         <div className="aform-group">
-          <label>Image URL</label>
-          <input name="img" type="url" placeholder="https://..." defaultValue={initial?.img} />
+          <label>Badge Tag</label>
+          <select name="badgeTag" defaultValue={initial?.badge_tag || "none"}>
+            <option value="none">— None —</option>
+            <option value="new">New</option>
+            <option value="best">Best Seller</option>
+            <option value="hot">Hot</option>
+            <option value="featured">Featured</option>
+          </select>
         </div>
+      </div>
+
+      <div className="aform-group">
+        <label>Image URL</label>
+        <input name="img" type="url" placeholder="https://..." defaultValue={initial?.img} />
       </div>
 
       <div className="aform-grid">

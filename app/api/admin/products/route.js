@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getSql, isDbConfigured } from "@/lib/db";
 import { getSessionCustomer } from "@/lib/auth";
+import { logActivity } from "@/lib/activityLog";
 
 export async function GET() {
-  const __admin = await getSessionCustomer();
-  if (!__admin || __admin.role !== "admin") {
+  const admin = await getSessionCustomer();
+  if (!admin || admin.role !== "admin") {
     return NextResponse.json({ ok: false, error: "Not authorized." }, { status: 401 });
   }
   if (!isDbConfigured()) {
@@ -30,8 +31,8 @@ function slugify(title) {
 }
 
 export async function POST(request) {
-  const __admin = await getSessionCustomer();
-  if (!__admin || __admin.role !== "admin") {
+  const admin = await getSessionCustomer();
+  if (!admin || admin.role !== "admin") {
     return NextResponse.json({ ok: false, error: "Not authorized." }, { status: 401 });
   }
   if (!isDbConfigured()) {
@@ -39,7 +40,7 @@ export async function POST(request) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const { title, brand, categoryId, img, mrp, sp, qtyLabel, perUnit, description, stock, featured } = body;
+  const { title, brandId, categoryId, img, mrp, sp, qtyLabel, perUnit, description, stock, featured, badgeTag } = body;
 
   if (!title || !mrp || !sp) {
     return NextResponse.json({ ok: false, error: "Title, MRP and Selling Price are required." }, { status: 400 });
@@ -48,14 +49,21 @@ export async function POST(request) {
   const sql = getSql();
   const slug = slugify(title);
 
+  let brandName = null;
+  if (brandId) {
+    const [brandRow] = await sql`SELECT name FROM brands WHERE id = ${brandId}`;
+    brandName = brandRow?.name || null;
+  }
+
   try {
     const [row] = await sql`
       INSERT INTO products
-        (slug, title, brand, category_id, img, images, mrp, sp, qty_label, per_unit, description, stock, rating, reviews, featured)
+        (slug, title, brand, brand_id, category_id, img, images, mrp, sp, qty_label, per_unit, description, stock, rating, reviews, featured, badge_tag)
       VALUES
-        (${slug}, ${title}, ${brand || null}, ${categoryId || null}, ${img || null}, ${JSON.stringify(img ? [img] : [])},
-         ${mrp}, ${sp}, ${qtyLabel || null}, ${perUnit || null}, ${description || null}, ${stock || 0}, 4, '[]', ${!!featured})
+        (${slug}, ${title}, ${brandName}, ${brandId || null}, ${categoryId || null}, ${img || null}, ${JSON.stringify(img ? [img] : [])},
+         ${mrp}, ${sp}, ${qtyLabel || null}, ${perUnit || null}, ${description || null}, ${stock || 0}, 4, '[]', ${!!featured}, ${badgeTag || "none"})
     `;
+    await logActivity(admin, "Created product", title);
     return NextResponse.json({ ok: true, id: row.id });
   } catch (err) {
     return NextResponse.json({ ok: false, error: String(err.message || err) }, { status: 500 });

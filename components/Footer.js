@@ -2,14 +2,18 @@ import Link from "next/link";
 import Image from "next/image";
 import { SITE, FOOTER_QUICK_LINKS, FOOTER_SERVICE_LINKS } from "@/lib/siteData";
 
-export default function Footer() {
+export default function Footer({ settings }) {
+  const storeName = settings?.store_name || SITE.name;
+  const phone = settings?.support_phone || SITE.supportPhone;
+  const email = settings?.support_email || SITE.supportEmail;
+  const address = settings?.address || SITE.address;
   return (
     <footer className="site-footer" role="contentinfo">
       <div className="footer-inner">
         <div className="footer-main">
           <div className="footer-col footer-about">
             <div className="f-logo">
-              <Image src={SITE.logo} alt={`${SITE.name} logo`} width={130} height={38} />
+              <Image src={SITE.logo} alt={`${storeName} logo`} width={130} height={38} />
             </div>
             <p>Your everyday grocery store — fresh produce, daily essentials and household needs, delivered to your doorstep.</p>
             <div className="footer-social-row">
@@ -42,15 +46,15 @@ export default function Footer() {
             <ul className="footer-contact-list">
               <li>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.4 2.1L8.1 9.7a16 16 0 0 0 6.2 6.2l1.2-1.2a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.7 2Z" /></svg>
-                <span>{SITE.supportPhone}</span>
+                <span>{phone}</span>
               </li>
               <li>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></svg>
-                <span>{SITE.supportEmail}</span>
+                <span>{email}</span>
               </li>
               <li>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 21s6-6.2 6-10.5A6 6 0 0 0 6 10.5C6 14.8 12 21 12 21zM12 12.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" /></svg>
-                <span>{SITE.address}</span>
+                <span>{address}</span>
               </li>
             </ul>
           </div>
@@ -66,7 +70,7 @@ export default function Footer() {
         </div>
 
         <div className="footer-bottom">
-          <p className="footer-copy">&copy; {new Date().getFullYear()} {SITE.name}. All rights reserved.</p>
+          <p className="footer-copy">&copy; {new Date().getFullYear()} {storeName}. All rights reserved.</p>
         </div>
       </div>
     </footer>

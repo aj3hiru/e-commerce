@@ -25,7 +25,7 @@ export async function POST(request) {
 
   try {
     const [customer] = await sql`
-      SELECT id, password_hash, role FROM customers
+      SELECT id, password_hash, role, status FROM customers
       WHERE email = ${identifier} OR phone = ${identifier} OR username = ${identifier}
     `;
     if (!customer) {
@@ -35,6 +35,10 @@ export async function POST(request) {
     const valid = await bcrypt.compare(password, customer.password_hash);
     if (!valid) {
       return NextResponse.json({ ok: false, error: "Incorrect password." }, { status: 401 });
+    }
+
+    if (customer.status === "blocked") {
+      return NextResponse.json({ ok: false, error: "Your account has been blocked. Please contact support." }, { status: 403 });
     }
 
     await createSession(customer.id);

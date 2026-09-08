@@ -63,7 +63,20 @@ export default function AdminShell({ customer, children }) {
                 <Link href="/admin/products/new" className={`nav-link ${isActive("/admin/products/new") ? "active" : ""}`}>
                   <i className="fas fa-plus-square" /> Add Product
                 </Link>
+                <Link href="/admin/brands" className={`nav-link ${isActive("/admin/brands") ? "active" : ""}`}>
+                  <i className="fas fa-copyright" /> Brands
+                </Link>
+                <Link href="/admin/reviews" className={`nav-link ${isActive("/admin/reviews") ? "active" : ""}`}>
+                  <i className="fas fa-star-half-alt" /> Product Reviews
+                </Link>
               </div>
+            </div>
+
+            <div className="nav-section">
+              <div className="nav-title">Manage Category</div>
+              <Link href="/admin/categories" className={`nav-link ${isActive("/admin/categories") ? "active" : ""}`}>
+                <i className="fas fa-list" /> Categories
+              </Link>
             </div>
 
             <div className="nav-section">
@@ -93,7 +106,34 @@ export default function AdminShell({ customer, children }) {
             </div>
 
             <div className="nav-section">
+              <div className="nav-title">Customers</div>
+              <Link href="/admin/customers" className={`nav-link ${isActive("/admin/customers") ? "active" : ""}`}>
+                <i className="fas fa-user-friends" /> Customer List
+              </Link>
+            </div>
+
+            <div className="nav-section">
+              <div className="nav-title">Discounts</div>
+              <Link href="/admin/coupons" className={`nav-link ${isActive("/admin/coupons") ? "active" : ""}`}>
+                <i className="fas fa-percentage" /> Coupons
+              </Link>
+            </div>
+
+            <div className="nav-section">
+              <div className="nav-title">Settings</div>
+              <Link href="/admin/settings" className={`nav-link ${isActive("/admin/settings") ? "active" : ""}`}>
+                <i className="fas fa-building" /> Business Settings
+              </Link>
+            </div>
+
+            <div className="nav-section">
               <div className="nav-title">System</div>
+              <Link href="/admin/activity-logs" className={`nav-link ${isActive("/admin/activity-logs") ? "active" : ""}`}>
+                <i className="fas fa-history" /> Activity Logs
+              </Link>
+              <Link href="/admin/users" className={`nav-link ${isActive("/admin/users") ? "active" : ""}`}>
+                <i className="fas fa-user" /> Users Manager
+              </Link>
               <Link href="/" target="_blank" className="nav-link">
                 <i className="fas fa-store" /> View Store
               </Link>

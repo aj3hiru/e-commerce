@@ -1,6 +1,7 @@
 import StarRating from "./StarRating";
+import ReviewForm from "./ReviewForm";
 
-export default function ReviewsSection({ reviews }) {
+export default function ReviewsSection({ reviews, productSlug, isLoggedIn }) {
   return (
     <div>
       <h2 className="pdp-section-title">Customer Reviews</h2>
@@ -19,9 +20,14 @@ export default function ReviewsSection({ reviews }) {
           ))}
         </div>
       )}
-      <p className="review-login-cta">
-        <a href="/login">Login</a> to write a review.
-      </p>
+
+      {isLoggedIn ? (
+        <ReviewForm productSlug={productSlug} />
+      ) : (
+        <p className="review-login-cta">
+          <a href="/login">Login</a> to write a review.
+        </p>
+      )}
     </div>
   );
 }

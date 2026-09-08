@@ -145,6 +145,105 @@ export async function GET(request) {
       )
     `;
 
+    await sql`
+      CREATE TABLE IF NOT EXISTS brands (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) UNIQUE NOT NULL,
+        slug VARCHAR(191) UNIQUE NOT NULL,
+        logo TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS coupons (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        code VARCHAR(50) UNIQUE NOT NULL,
+        type VARCHAR(10) NOT NULL,
+        value DECIMAL(10,2) NOT NULL,
+        min_order_amount DECIMAL(10,2) DEFAULT 0,
+        max_discount DECIMAL(10,2),
+        expiry_date DATE,
+        status VARCHAR(20) DEFAULT 'active',
+        usage_count INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS product_reviews (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        product_id INT NOT NULL,
+        customer_id INT,
+        customer_name VARCHAR(255) NOT NULL,
+        rating INT NOT NULL,
+        text TEXT,
+        status VARCHAR(20) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+        FOREIGN KEY (customer_id) REFERENCES customers(id)
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS activity_logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        admin_id INT,
+        admin_name VARCHAR(255),
+        action VARCHAR(255) NOT NULL,
+        details TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS business_settings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        setting_key VARCHAR(100) UNIQUE NOT NULL,
+        setting_value TEXT
+      )
+    `;
+
+    // Migration safety net for columns added after products/customers already existed.
+    try {
+      await sql`ALTER TABLE products ADD COLUMN brand_id INT NULL`;
+    } catch {
+      // column already exists
+    }
+    try {
+      await sql`ALTER TABLE products ADD COLUMN badge_tag VARCHAR(20) DEFAULT 'none'`;
+    } catch {
+      // column already exists
+    }
+    try {
+      await sql`ALTER TABLE customers ADD COLUMN status VARCHAR(20) DEFAULT 'active'`;
+    } catch {
+      // column already exists
+    }
+    try {
+      await sql`ALTER TABLE orders ADD COLUMN coupon_code VARCHAR(50)`;
+    } catch {
+      // column already exists
+    }
+    try {
+      await sql`ALTER TABLE orders ADD COLUMN discount DECIMAL(10,2) DEFAULT 0`;
+    } catch {
+      // column already exists
+    }
+
+    // Seed default business settings (INSERT IGNORE = won't overwrite if admin already changed them)
+    const defaultSettings = [
+      ["store_name", "Cmart Ready"],
+      ["support_phone", "+91 98765 43210"],
+      ["support_email", "support@cmartready.in"],
+      ["address", "Andheri West, Mumbai, India"],
+      ["delivery_slot_text", "Today 12:00 PM - 03:00 PM"],
+      ["festive_banner_text", "FESTIVE CELEBRATIONS"],
+    ];
+    for (const [key, value] of defaultSettings) {
+      await sql`INSERT IGNORE INTO business_settings (setting_key, setting_value) VALUES (${key}, ${value})`;
+    }
+
     const existing = await sql`SELECT COUNT(*) AS count FROM categories`;
     if (Number(existing[0].count) > 0) {
       return NextResponse.json({ ok: true, message: "Tables already set up and seeded. Nothing more to do." });

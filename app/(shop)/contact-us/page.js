@@ -1,9 +1,11 @@
 import ContactForm from "@/components/ContactForm";
 import { SITE } from "@/lib/siteData";
+import { getSettings } from "@/lib/settings";
 
 export const metadata = { title: `Contact Us — ${SITE.name}` };
 
-export default function ContactUsPage() {
+export default async function ContactUsPage() {
+  const settings = await getSettings();
   return (
     <div>
       <div className="static-hero">
@@ -21,7 +23,7 @@ export default function ContactUsPage() {
                 </span>
                 <div>
                   <h4>Call Us</h4>
-                  <p>{SITE.supportPhone}</p>
+                  <p>{settings.support_phone}</p>
                   <p>Mon–Sat, 9:00 AM – 8:00 PM</p>
                 </div>
               </div>
@@ -31,7 +33,7 @@ export default function ContactUsPage() {
                 </span>
                 <div>
                   <h4>Email Us</h4>
-                  <p>{SITE.supportEmail}</p>
+                  <p>{settings.support_email}</p>
                   <p>We reply within 24 hours</p>
                 </div>
               </div>
@@ -41,7 +43,7 @@ export default function ContactUsPage() {
                 </span>
                 <div>
                   <h4>Visit Us</h4>
-                  <p>{SITE.address}</p>
+                  <p>{settings.address}</p>
                 </div>
               </div>
             </div>

@@ -15,10 +15,12 @@ import {
   HamburgerIcon,
 } from "./Icons";
 
-export default function Header({ customer }) {
+export default function Header({ customer, settings }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { count, total, wishlist } = useCart();
   const firstName = customer?.name?.split(" ")[0] || "";
+  const storeName = settings?.store_name || SITE.name;
+  const deliverySlot = settings?.delivery_slot_text || "Today 12:00 PM - 03:00 PM";
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -29,8 +31,8 @@ export default function Header({ customer }) {
     <>
       {/* ============ DESKTOP HEADER ============ */}
       <header className="topbar">
-        <Link href="/" className="logo" aria-label={`${SITE.name} home`}>
-          <Image className="mark" src={SITE.logo} alt={`${SITE.name} logo`} width={150} height={44} priority />
+        <Link href="/" className="logo" aria-label={`${storeName} home`}>
+          <Image className="mark" src={SITE.logo} alt={`${storeName} logo`} width={150} height={44} priority />
         </Link>
 
         <div className="location">
@@ -48,7 +50,7 @@ export default function Header({ customer }) {
           Earliest <span className="hl">Home Delivery</span> available
           <div className="slot">
             <ClockIcon width={14} height={14} />
-            Today 12:00 PM - 03:00 PM
+            {deliverySlot}
           </div>
         </div>
 
@@ -97,8 +99,8 @@ export default function Header({ customer }) {
       {/* ============ MOBILE HEADER ============ */}
       <div className="mobile-topbar">
         <HamburgerIcon className="hamburger-mobile" onClick={() => setSidebarOpen(true)} />
-        <Link href="/" className="logo" aria-label={`${SITE.name} home`}>
-          <Image className="mark" src={SITE.logo} alt={`${SITE.name} logo`} width={110} height={34} />
+        <Link href="/" className="logo" aria-label={`${storeName} home`}>
+          <Image className="mark" src={SITE.logo} alt={`${storeName} logo`} width={110} height={34} />
         </Link>
         <div className="mobile-actions">
           <Link href="/wishlist" className="cart-badge">
@@ -147,7 +149,7 @@ export default function Header({ customer }) {
               <span className="sidebar-avatar">
                 <UserIcon width={22} height={22} />
               </span>
-              <span>{customer ? `Hi, ${firstName}!` : `Welcome to ${SITE.name}!`}</span>
+              <span>{customer ? `Hi, ${firstName}!` : `Welcome to ${storeName}!`}</span>
             </div>
             {customer ? (
               <div style={{ display: "flex", gap: 8 }}>

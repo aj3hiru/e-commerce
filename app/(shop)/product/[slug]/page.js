@@ -6,6 +6,7 @@ import StarRating from "@/components/StarRating";
 import ReviewsSection from "@/components/ReviewsSection";
 import ProductGrid from "@/components/ProductGrid";
 import { getProductBySlug, getRelatedProducts } from "@/lib/data";
+import { getSessionCustomer } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export default async function ProductPage({ params }) {
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const related = await getRelatedProducts(product);
+  const [related, customer] = await Promise.all([getRelatedProducts(product), getSessionCustomer()]);
   const off = product.mrp - product.sp;
   const outOfStock = product.stock <= 0;
 
@@ -71,7 +72,7 @@ export default async function ProductPage({ params }) {
         </div>
       </div>
 
-      <ReviewsSection reviews={product.reviews} />
+      <ReviewsSection reviews={product.reviews} productSlug={product.slug} isLoggedIn={Boolean(customer)} />
 
       {related.length > 0 && (
         <div style={{ margin: "0 -32px" }}>

@@ -18,9 +18,45 @@ export default function CheckoutPage() {
   const [payment, setPayment] = useState("cod");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState(null);
+  const [couponError, setCouponError] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
 
   const delivery = total >= 500 ? 0 : 40;
-  const grandTotal = total + delivery;
+  const discount = coupon?.discount || 0;
+  const grandTotal = Math.max(0, total + delivery - discount);
+
+  const applyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponError("");
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponInput.trim(), subtotal: total }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setCouponError(data.error || "Invalid coupon.");
+        setCoupon(null);
+      } else {
+        setCoupon(data);
+        setCouponError("");
+      }
+    } catch {
+      setCouponError("Network error — please try again.");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCoupon(null);
+    setCouponInput("");
+    setCouponError("");
+  };
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
@@ -40,7 +76,10 @@ export default function CheckoutPage() {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items, address, payment, subtotal: total, delivery, total: grandTotal }),
+        body: JSON.stringify({
+          items, address, payment, subtotal: total, delivery,
+          discount, couponCode: coupon?.code || null, total: grandTotal,
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
@@ -167,9 +206,42 @@ export default function CheckoutPage() {
             <span>Delivery</span>
             <span>{delivery === 0 ? "FREE" : `₹${delivery}`}</span>
           </div>
+
+          <div style={{ margin: "12px 0" }}>
+            {coupon ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--green-light)", padding: "8px 12px", borderRadius: 6, fontSize: 13 }}>
+                <span style={{ color: "var(--green-dark)", fontWeight: 700 }}>
+                  🏷️ {coupon.code} applied
+                </span>
+                <button type="button" onClick={removeCoupon} style={{ color: "#c62828", fontWeight: 700, background: "none", border: "none", cursor: "pointer" }}>Remove</button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  type="text"
+                  placeholder="Coupon code"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  style={{ flex: 1, border: "1px solid var(--border)", borderRadius: 6, padding: "8px 10px", fontSize: 13 }}
+                />
+                <button type="button" onClick={applyCoupon} disabled={couponLoading} style={{ whiteSpace: "nowrap", background: "var(--green)", color: "#fff", border: "none", borderRadius: 6, padding: "0 16px", fontWeight: 700, fontSize: 13 }}>
+                  {couponLoading ? "Checking…" : "Apply"}
+                </button>
+              </div>
+            )}
+            {couponError && <p style={{ color: "#c62828", fontSize: 12, marginTop: 6 }}>{couponError}</p>}
+          </div>
+
+          {discount > 0 && (
+            <div className="row" style={{ color: "var(--green-dark)" }}>
+              <span>Discount</span>
+              <span>−₹{discount.toFixed(2)}</span>
+            </div>
+          )}
+
           <div className="row total">
             <span>Total</span>
-            <span>₹{grandTotal}</span>
+            <span>₹{grandTotal.toFixed(2)}</span>
           </div>
           {error && <p style={{ color: "#c62828", fontSize: 13, marginTop: 10 }}>{error}</p>}
           <button type="submit" className="place-order-btn" disabled={loading}>

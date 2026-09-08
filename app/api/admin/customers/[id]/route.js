@@ -1,0 +1,30 @@
+import { NextResponse } from "next/server";
+import { getSql, isDbConfigured } from "@/lib/db";
+import { getSessionCustomer } from "@/lib/auth";
+import { logActivity } from "@/lib/activityLog";
+
+export async function PUT(request, { params }) {
+  const admin = await getSessionCustomer();
+  if (!admin || admin.role !== "admin") {
+    return NextResponse.json({ ok: false, error: "Not authorized." }, { status: 401 });
+  }
+  if (!isDbConfigured()) {
+    return NextResponse.json({ ok: false, error: "Database not connected." }, { status: 503 });
+  }
+
+  const { id } = await params;
+  const body = await request.json().catch(() => ({}));
+  const { status } = body;
+  if (!["active", "blocked"].includes(status)) {
+    return NextResponse.json({ ok: false, error: "Invalid status." }, { status: 400 });
+  }
+
+  const sql = getSql();
+  try {
+    await sql`UPDATE customers SET status = ${status} WHERE id = ${id}`;
+    await logActivity(admin, `Customer ${status === "blocked" ? "blocked" : "unblocked"}`, `id: ${id}`);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: String(err.message || err) }, { status: 500 });
+  }
+}

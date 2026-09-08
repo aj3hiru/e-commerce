@@ -852,3 +852,14 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .aform-group input:focus, .aform-group select:focus, .aform-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-lighter); }
 
 @media (max-width: 1023px) { .content-wrapper { padding: 1rem; } }
+
+/* Product badge tags (New/Best/Hot/Featured) */
+.product-tag {
+  position: absolute; top: 8px; left: 8px; z-index: 2;
+  font-size: 10px; font-weight: 800; letter-spacing: .3px;
+  padding: 4px 8px; border-radius: 4px; color: #fff;
+}
+.product-tag.tag-new { background: #3b82f6; }
+.product-tag.tag-best { background: #10b981; }
+.product-tag.tag-hot { background: #ef4444; }
+.product-tag.tag-featured { background: #f59e0b; color: #1f2937; }
