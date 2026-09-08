@@ -99,15 +99,16 @@ export async function GET(request) {
     // this route is visited, so it stays in sync even after the first run.
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;
+    const adminUsername = process.env.ADMIN_USERNAME || null;
     if (adminEmail && adminPassword) {
       const [existingAdmin] = await sql`SELECT id FROM customers WHERE email = ${adminEmail}`;
       if (existingAdmin) {
-        await sql`UPDATE customers SET role = 'admin' WHERE id = ${existingAdmin.id}`;
+        await sql`UPDATE customers SET role = 'admin', username = ${adminUsername} WHERE id = ${existingAdmin.id}`;
       } else {
         const hash = await bcrypt.hash(adminPassword, 10);
         await sql`
-          INSERT INTO customers (name, email, phone, password_hash, role)
-          VALUES ('Admin', ${adminEmail}, NULL, ${hash}, 'admin')
+          INSERT INTO customers (name, email, phone, username, password_hash, role)
+          VALUES ('Admin', ${adminEmail}, NULL, ${adminUsername}, ${hash}, 'admin')
         `;
       }
     }
