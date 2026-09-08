@@ -15,9 +15,15 @@ import {
   HamburgerIcon,
 } from "./Icons";
 
-export default function Header() {
+export default function Header({ customer }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { count, total, wishlist } = useCart();
+  const firstName = customer?.name?.split(" ")[0] || "";
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/";
+  };
 
   return (
     <>
@@ -52,10 +58,22 @@ export default function Header() {
         </form>
 
         <div className="header-actions">
-          <Link href="/login" className="item">
-            <UserIcon className="icon" />
-            <span className="label">Sign In / Register</span>
-          </Link>
+          {customer ? (
+            <div className="item" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <Link href="/account" className="item" style={{ gap: 7 }}>
+                <UserIcon className="icon" />
+                <span className="label">Hi, {firstName}</span>
+              </Link>
+              <button type="button" onClick={handleLogout} style={{ fontSize: 13, fontWeight: 600, color: "#c62828" }}>
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link href="/login" className="item">
+              <UserIcon className="icon" />
+              <span className="label">Sign In / Register</span>
+            </Link>
+          )}
           <Link href="/wishlist" className="item cart-badge">
             <HeartIcon className="icon" />
             {wishlist.length > 0 && <span className="count">{wishlist.length}</span>}
@@ -129,9 +147,16 @@ export default function Header() {
               <span className="sidebar-avatar">
                 <UserIcon width={22} height={22} />
               </span>
-              <span>Welcome to {SITE.name}!</span>
+              <span>{customer ? `Hi, ${firstName}!` : `Welcome to ${SITE.name}!`}</span>
             </div>
-            <Link href="/login" className="sidebar-signin">Sign In / Register</Link>
+            {customer ? (
+              <div style={{ display: "flex", gap: 8 }}>
+                <Link href="/account" className="sidebar-signin" style={{ flex: 1 }}>My Account</Link>
+                <button type="button" onClick={handleLogout} className="sidebar-signin" style={{ flex: 1, background: "#c62828" }}>Logout</button>
+              </div>
+            ) : (
+              <Link href="/login" className="sidebar-signin">Sign In / Register</Link>
+            )}
           </div>
         </div>
 
