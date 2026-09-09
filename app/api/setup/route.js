@@ -231,6 +231,88 @@ export async function GET(request) {
       // column already exists
     }
 
+    // ── Billing / POS support ────────────────────────────────────────────────
+    // Products: barcode/SKU scanning, GST, HSN code, physical vs digital stock handling.
+    for (const stmt of [
+      `ALTER TABLE products ADD COLUMN sku VARCHAR(100)`,
+      `ALTER TABLE products ADD COLUMN barcode VARCHAR(100)`,
+      `ALTER TABLE products ADD COLUMN gst_rate DECIMAL(5,2) DEFAULT 0`,
+      `ALTER TABLE products ADD COLUMN hsn_code VARCHAR(20)`,
+      `ALTER TABLE products ADD COLUMN product_type VARCHAR(20) DEFAULT 'physical'`,
+      `ALTER TABLE products ADD COLUMN status VARCHAR(20) DEFAULT 'active'`,
+    ]) {
+      try { await sql([stmt]); } catch { /* column already exists */ }
+    }
+    try {
+      await sql`CREATE UNIQUE INDEX idx_products_barcode ON products (barcode)`;
+    } catch { /* index already exists, or barcode has duplicate NULLs — fine either way */ }
+
+    // Orders: offline/POS sales alongside online ones. Address fields only make
+    // sense for online (delivery) orders, so they're relaxed to nullable here.
+    for (const stmt of [
+      `ALTER TABLE orders MODIFY COLUMN phone VARCHAR(30) NULL`,
+      `ALTER TABLE orders MODIFY COLUMN address TEXT NULL`,
+      `ALTER TABLE orders MODIFY COLUMN city VARCHAR(100) NULL`,
+      `ALTER TABLE orders MODIFY COLUMN pincode VARCHAR(20) NULL`,
+      `ALTER TABLE orders ADD COLUMN order_type VARCHAR(20) DEFAULT 'online'`,
+      `ALTER TABLE orders ADD COLUMN is_guest BOOLEAN DEFAULT FALSE`,
+      `ALTER TABLE orders ADD COLUMN paid_amount DECIMAL(10,2) DEFAULT 0`,
+      `ALTER TABLE orders ADD COLUMN gst_amount DECIMAL(10,2) DEFAULT 0`,
+      `ALTER TABLE orders ADD COLUMN payment_status VARCHAR(20) DEFAULT 'Paid'`,
+      `ALTER TABLE orders ADD COLUMN promised_date DATE`,
+    ]) {
+      try { await sql([stmt]); } catch { /* column already exists */ }
+    }
+
+    // Customers: online (storefront signup) vs offline (created at the till).
+    try {
+      await sql`ALTER TABLE customers ADD COLUMN customer_type VARCHAR(20) DEFAULT 'online'`;
+    } catch { /* column already exists */ }
+    try {
+      await sql`ALTER TABLE customers MODIFY COLUMN email VARCHAR(255) NULL`;
+    } catch { /* already nullable, or a unique-null edge case — fine */ }
+
+    // Coupons: which scope they apply to (needed for POS coupon matching).
+    for (const stmt of [
+      `ALTER TABLE coupons ADD COLUMN applies_to VARCHAR(20) DEFAULT 'all'`,
+      `ALTER TABLE coupons ADD COLUMN product_id INT NULL`,
+      `ALTER TABLE coupons ADD COLUMN category_id INT NULL`,
+      `ALTER TABLE coupons ADD COLUMN subcategory_id INT NULL`,
+      `ALTER TABLE coupons ADD COLUMN number_of_times INT DEFAULT NULL`,
+    ]) {
+      try { await sql([stmt]); } catch { /* column already exists */ }
+    }
+
+    // Split payments per order (Cash + Card + UPI on the same bill).
+    await sql`
+      CREATE TABLE IF NOT EXISTS order_payments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        order_id INT NOT NULL,
+        payment_method VARCHAR(20) NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+      )
+    `;
+
+    // Dues / credit tracking for POS sales not paid in full.
+    await sql`
+      CREATE TABLE IF NOT EXISTS credits (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        order_id INT NOT NULL,
+        customer_id INT NULL,
+        customer_name VARCHAR(255) NOT NULL,
+        customer_phone VARCHAR(30),
+        amount DECIMAL(10,2) NOT NULL,
+        promised_date DATE,
+        status VARCHAR(20) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        paid_at TIMESTAMP NULL,
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+        FOREIGN KEY (customer_id) REFERENCES customers(id)
+      )
+    `;
+
     // Seed default business settings (INSERT IGNORE = won't overwrite if admin already changed them)
     const defaultSettings = [
       ["store_name", "Cmart Ready"],
@@ -239,6 +321,13 @@ export async function GET(request) {
       ["address", "Andheri West, Mumbai, India"],
       ["delivery_slot_text", "Today 12:00 PM - 03:00 PM"],
       ["festive_banner_text", "FESTIVE CELEBRATIONS"],
+      ["order_id_prefix", "ORD"],
+      ["order_sequence_next", "1"],
+      ["pos_print_mode", "both"],
+      ["printer_format", "thermal_80"],
+      ["shortcut_complete_sale", "F2"],
+      ["shortcut_print", "F3"],
+      ["shortcut_new_sale", "F4"],
     ];
     for (const [key, value] of defaultSettings) {
       await sql`INSERT IGNORE INTO business_settings (setting_key, setting_value) VALUES (${key}, ${value})`;

@@ -47,6 +47,9 @@ export default function AdminShell({ customer, children }) {
               <Link href="/admin" className={`nav-link ${isActive("/admin", true) ? "active" : ""}`}>
                 <i className="fas fa-home" /> Dashboard
               </Link>
+              <Link href="/admin/billing" className={`nav-link ${isActive("/admin/billing") ? "active" : ""}`}>
+                <i className="fas fa-cash-register" /> Billing / POS
+              </Link>
             </div>
 
             <div className="nav-section">

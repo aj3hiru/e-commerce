@@ -12,7 +12,9 @@ export async function GET(request, { params }) {
   const [order] = await sql`SELECT * FROM orders WHERE id = ${id}`;
   if (!order) return NextResponse.json({ ok: false, error: "Order not found." }, { status: 404 });
   const items = await sql`SELECT * FROM order_items WHERE order_id = ${id}`;
-  return NextResponse.json({ ok: true, order, items });
+  const payments = await sql`SELECT * FROM order_payments WHERE order_id = ${id}`;
+  const [credit] = await sql`SELECT * FROM credits WHERE order_id = ${id}`;
+  return NextResponse.json({ ok: true, order, items, payments, credit: credit || null });
 }
 
 export async function PUT(request, { params }) {
